@@ -15,12 +15,12 @@ cat > config.json << EOF
     },
     "inbounds":[
         {
-            "port":PORT,
+            "port":${PORT},
             "protocol":"vless",
             "settings":{
                 "clients":[
                     {
-                        "id":"UUID",
+                        "id":"${UUID}",
                         "flow":"xtls-rprx-direct"
                     }
                 ],
@@ -30,19 +30,19 @@ cat > config.json << EOF
                         "dest":3001
                     },
                     {
-                        "path":"/WSPATH-vless",
+                        "path":"/${WSPATH}-vless",
                         "dest":3002
                     },
                     {
-                        "path":"/WSPATH-vmess",
+                        "path":"/${WSPATH}-vmess",
                         "dest":3003
                     },
                     {
-                        "path":"/WSPATH-trojan",
+                        "path":"/${WSPATH}-trojan",
                         "dest":3004
                     },
                     {
-                        "path":"/WSPATH-shadowsocks",
+                        "path":"/${WSPATH}-shadowsocks",
                         "dest":3005
                     }
                 ]
@@ -58,7 +58,7 @@ cat > config.json << EOF
             "settings":{
                 "clients":[
                     {
-                        "id":"UUID"
+                        "id":"${UUID}"
                     }
                 ],
                 "decryption":"none"
@@ -75,7 +75,7 @@ cat > config.json << EOF
             "settings":{
                 "clients":[
                     {
-                        "id":"UUID",
+                        "id":"${UUID}",
                         "level":0,
                         "email":"argo@xray"
                     }
@@ -86,8 +86,17 @@ cat > config.json << EOF
                 "network":"ws",
                 "security":"none",
                 "wsSettings":{
-                    "path":"/WSPATH-vless"
+                    "path":"/${WSPATH}-vless"
                 }
+            },
+            "sniffing":{
+                "enabled":true,
+                "destOverride":[
+                    "http",
+                    "tls",
+                    "quic"
+                ],
+                "metadataOnly":false
             }
         },
         {
@@ -97,7 +106,7 @@ cat > config.json << EOF
             "settings":{
                 "clients":[
                     {
-                        "id":"UUID",
+                        "id":"${UUID}",
                         "alterId":0
                     }
                 ]
@@ -105,8 +114,17 @@ cat > config.json << EOF
             "streamSettings":{
                 "network":"ws",
                 "wsSettings":{
-                    "path":"/WSPATH-vmess"
+                    "path":"/${WSPATH}-vmess"
                 }
+            },
+            "sniffing":{
+                "enabled":true,
+                "destOverride":[
+                    "http",
+                    "tls",
+                    "quic"
+                ],
+                "metadataOnly":false
             }
         },
         {
@@ -116,7 +134,7 @@ cat > config.json << EOF
             "settings":{
                 "clients":[
                     {
-                        "password":"UUID"
+                        "password":"${UUID}"
                     }
                 ]
             },
@@ -124,8 +142,17 @@ cat > config.json << EOF
                 "network":"ws",
                 "security":"none",
                 "wsSettings":{
-                    "path":"/WSPATH-trojan"
+                    "path":"/${WSPATH}-trojan"
                 }
+            },
+            "sniffing":{
+                "enabled":true,
+                "destOverride":[
+                    "http",
+                    "tls",
+                    "quic"
+                ],
+                "metadataOnly":false
             }
         },
         {
@@ -136,7 +163,7 @@ cat > config.json << EOF
                 "clients":[
                     {
                         "method":"chacha20-ietf-poly1305",
-                        "password":"UUID"
+                        "password":"${UUID}"
                     }
                 ],
                 "decryption":"none"
@@ -144,8 +171,17 @@ cat > config.json << EOF
             "streamSettings":{
                 "network":"ws",
                 "wsSettings":{
-                    "path":"/WSPATH-shadowsocks"
+                    "path":"/${WSPATH}-shadowsocks"
                 }
+            },
+            "sniffing":{
+                "enabled":true,
+                "destOverride":[
+                    "http",
+                    "tls",
+                    "quic"
+                ],
+                "metadataOnly":false
             }
         }
     ],
@@ -173,21 +209,21 @@ wget -O temp.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray
 unzip temp.zip xray geosite.dat geoip.dat
 mv xray ${RANDOM_NAME}
 rm -f temp.zip
-sed -i "s#UUID#$UUID#g;s#WSPATH#${WSPATH}#g;s#PORT#${PORT}#g" config.json
 
 # 如果有设置哪吒探针三个变量,会安装。如果不填或者不全,则不会安装
 [ -n "${NEZHA_SERVER}" ] && [ -n "${NEZHA_PORT}" ] && [ -n "${NEZHA_KEY}" ] && wget https://raw.githubusercontent.com/naiba/nezha/master/script/install.sh -O nezha.sh && chmod +x nezha.sh && echo '0' | ./nezha.sh install_agent ${NEZHA_SERVER} ${NEZHA_PORT} ${NEZHA_KEY}
 
 # 显示节点信息
+until [ -e argo.log ]; do sleep 1; done
 ARGO=$(cat argo.log | grep -oE "https://.*[a-z]+cloudflare.com" | sed "s#https://##")
 cat > list << EOF
 vless://${UUID}@www.digitalocean.com:443?encryption=none&security=tls&type=ws&host=${ARGO}&path=/${WSPATH}-vless&sni=${ARGO}#Argo-Vless
-
-vmess://$(echo "none:${UUID}@www.digitalocean.com:443" | base64 -w 0)?remarks=Argo-Vmess&obfsParam=${ARGO}&path=/${WSPATH}-vmess&obfs=websocket&tls=1&peer=${ARGO}&alterId=0
-
+===============================================================================
+vmess://$(echo "none:${UUID}@www.digitalocean.com:443" | base64 -w0)?remarks=Argo-Vmess&obfsParam=${ARGO}&path=/${WSPATH}-vmess&obfs=websocket&tls=1&peer=${ARGO}&alterId=0
+===============================================================================
 trojan://${UUID}@www.digitalocean.com:443?peer=${ARGO}&plugin=obfs-local;obfs=websocket;obfs-host=${ARGO};obfs-uri=/${WSPATH}-trojan#Argo-Trojan
-
-ss://$(echo "chacha20-ietf-poly1305:${UUID}@www.digitalocean.com:443" | base64 -w 0)?v2ray-plugin=$(echo '{"peer":"'${ARGO}'","path":"/'${WSPATH}'-shadowsocks","host":"'${ARGO}'","mode":"websocket","tls":true}' | base64 -w 0)#Argo-Shadowsocks
+===============================================================================
+ss://$(echo "chacha20-ietf-poly1305:${UUID}@www.digitalocean.com:443" | base64 -w0)?obfs=wss&obfsParam=${ARGO}&path=/${WSPATH}-shadowsocks#Argo-Shadowsocks
 
 EOF
 
