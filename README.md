@@ -21,9 +21,10 @@
 * vmess 和 vless 的 uuid，trojan 和 shadowsocks 的 password，各协议的 ws 路径既可以自定义，又或者使用默认值
 * 集成哪吒探针，可以自由选择是否安装
 * 没有使用伪装网页，减少资源占用，因为只会给平台封，几乎不会给 GFW 封
+* 节点信息以`Clash`和`小火箭链接`方式输出
 
 ## 部署:
-* 镜像 `fscarmen/argo-xary:latest`
+* 镜像 `fscarmen/argo-xary:latest` (注:这里 xray 不是拼错，是改一下关键词而已)
 
 * PaaS 平台用到的变量
   | 变量名        | 是否必须 | 默认值 | 备注 |
